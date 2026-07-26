@@ -208,8 +208,8 @@ model = dict(
             pc_range=point_cloud_range))))
 
 dataset_type = 'CustomNuScenesOfflineLocalMapDataset'
-data_root = '/MapUncertaintyPrediction/nuscenes/'
-data_ann = '/MapUncertaintyPrediction/processed/maptrv2/'
+data_root = 'data/nuscenes/'
+data_ann = 'data/nuscenes/'
 file_client_args = dict(backend='disk')
 
 

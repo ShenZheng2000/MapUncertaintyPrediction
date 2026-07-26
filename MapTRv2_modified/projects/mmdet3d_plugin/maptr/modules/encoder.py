@@ -113,7 +113,7 @@ class BaseTransform(BaseModule):
         points = self.frustum - post_trans.view(B, N, 1, 1, 1, 3)
         # breakpoint()
         points = (
-            torch.inverse(post_rots.to("cpu")).to("cuda:0")
+            torch.inverse(post_rots.to("cpu")).to(post_rots.device)
             .view(B, N, 1, 1, 1, 3, 3)
             .matmul(points.unsqueeze(-1))
         )
@@ -125,13 +125,13 @@ class BaseTransform(BaseModule):
             ),
             5,
         )
-        combine = rots.matmul(torch.inverse(intrins.to("cpu")).to("cuda:0"))
+        combine = rots.matmul(torch.inverse(intrins.to("cpu")).to(intrins.device))
         points = combine.view(B, N, 1, 1, 1, 3, 3).matmul(points).squeeze(-1)
         points += trans.view(B, N, 1, 1, 1, 3)
         # ego_to_lidar
         points -= lidar2ego_trans.view(B, 1, 1, 1, 1, 3)
         points = (
-            torch.inverse(lidar2ego_rots.to("cpu")).to("cuda:0")
+            torch.inverse(lidar2ego_rots.to("cpu")).to(lidar2ego_rots.device)
             .view(B, 1, 1, 1, 1, 3, 3)
             .matmul(points.unsqueeze(-1))
             .squeeze(-1)
