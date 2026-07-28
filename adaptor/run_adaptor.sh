@@ -12,12 +12,12 @@ run() {
       --version trainval \
       --map_model MapTR \
       --dataroot ../MapTRv2_modified/data/nuscenes \
-      --gt_map_file ../geo_adaptor_files/gt_geo_combined.pickle \
+      --gt_map_file ../adaptor_files/gt_full_val.pickle \
       --save_path ../trj_data/maptrv2 \
       --split "$1" \
       --index_file "$2" \
       --map_file "$3"
 }
 
-# run val   ../ad1aptor_files/traj_scene_frame_full_val.pkl   ../mapping_results/mapping_results_val.pickle
-# run train ../adaptor_files/traj_scene_frame_full_train.pkl ../mapping_results/mapping_results_train.pickle
+run val   ../adaptor_files/traj_scene_frame_full_val.pkl   ../mapping_results/mapping_results_val.pickle
+run train ../adaptor_files/traj_scene_frame_full_train.pkl ../mapping_results/mapping_results_train.pickle
