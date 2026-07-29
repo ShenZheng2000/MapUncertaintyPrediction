@@ -38,6 +38,7 @@ if __name__ == '__main__':
     parser.add_argument('--centerline', action='store_true', help='centerline usage')
 
     parser = HiVT.add_model_specific_args(parser)
+    parser.add_argument('--default_root_dir', type=str, default=None)
     args = parser.parse_args()
 
     model_checkpoint = ModelCheckpoint(monitor=args.monitor, save_top_k=args.save_top_k, mode='min')
