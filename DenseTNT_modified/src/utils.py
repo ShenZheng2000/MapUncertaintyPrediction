@@ -184,6 +184,8 @@ def add_argument(parser):
                         action='store_true')
     parser.add_argument("--nuscenes",
                         action='store_true')
+    parser.add_argument("--no_uncertainty",
+                        action='store_true')
     parser.add_argument("--future_frame_num",
                         default=80,
                         type=int)
@@ -276,7 +278,7 @@ def init(args_: Args, logger_):
 
     if not args.do_eval and not args.debug and os.path.exists(args.output_dir):
         print('{} {} exists'.format(get_color_text('Warning!'), args.output_dir))
-        input()
+        # input()
 
     if args.do_eval:
         assert os.path.exists(args.output_dir)

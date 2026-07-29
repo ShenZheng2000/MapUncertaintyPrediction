@@ -347,7 +347,7 @@ class Dataset(torch.utils.data.Dataset):
                             else:
                                 queue_res.put(None)
 
-                        instance = nuscene_get_instance(args, os.path.join(data_dir[0], file))
+                        instance = nuscene_get_instance(args, os.path.join(data_dir[0], file), uncertainty=not getattr(args, 'no_uncertainty', False))
                         put_instance_in_queue(instance)
 
 
