@@ -27,6 +27,11 @@ def eval_instance_argoverse(batch_size, args, pred, mapping, file2pred, file2lab
         if args.argoverse2:
             file_name = os.path.split(mapping[i]['file_name'])[1]
             file2pred[file_name] = a_pred
+        elif args.nuscenes:
+            file_name = os.path.split(mapping[i]['file_name'])[1][:-4]
+            file2pred[file_name] = a_pred
+            if not args.do_test:
+                file2labels[file_name] = mapping[i]['labels']
         else:
             file_name_int = int(os.path.split(mapping[i]['file_name'])[1][:-4])
             file2pred[file_name_int] = a_pred
@@ -37,7 +42,7 @@ def eval_instance_argoverse(batch_size, args, pred, mapping, file2pred, file2lab
     if not args.do_test:
         DE = np.zeros([batch_size, args.future_frame_num])
         for i in range(batch_size):
-            origin_labels = mapping[i]['origin_labels']
+            origin_labels = mapping[i]['labels'] if args.nuscenes else mapping[i]['origin_labels']
             for j in range(args.future_frame_num):
                 DE[i][j] = np.sqrt((origin_labels[j][0] - pred[i, 0, j, 0]) ** 2 + (
                         origin_labels[j][1] - pred[i, 0, j, 1]) ** 2)
@@ -55,7 +60,7 @@ def do_eval(args):
         "cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
 
     print("Loading Evalute Dataset", args.data_dir)
-    if args.argoverse:
+    if args.nuscenes:
         from dataset_nuscene import Dataset
     eval_dataset = Dataset(args, args.eval_batch_size)
     eval_sampler = SequentialSampler(eval_dataset)

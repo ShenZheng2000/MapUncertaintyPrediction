@@ -321,7 +321,7 @@ def init(args_: Args, logger_):
     os.makedirs(args.model_save_dir, exist_ok=True)
 
     def init_args_do_eval():
-        if args.argoverse:
+        if args.argoverse or args.nuscenes:
             args.data_dir = args.data_dir_for_val if not args.do_test else 'test_obs/data/'
         if args.model_recover_path is None:
             args.model_recover_path = os.path.join(args.output_dir, 'model_save', 'model.16.bin')

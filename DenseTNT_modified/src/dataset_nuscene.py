@@ -50,6 +50,8 @@ def nuscene_get_instance(args: utils.Args, instance_dir, uncertainty=True, cente
     ego_heading = data['ego_heading'][0]
     ego_hist = data['ego_hist']
     ego_fut = data['ego_fut']
+    if 'predicted_map' not in data:
+        return None
     vec_map = data['predicted_map']
     x_i, y_i, vx_i, vy_i, heading_i = (0, 1, 2, 3, 4)
 
