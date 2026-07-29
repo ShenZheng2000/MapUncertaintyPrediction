@@ -1,6 +1,8 @@
+cd /data3/shenzhen/Waymo_Projects/MapUncertaintyPrediction/HiVT_modified
+
 python eval.py \
-  --root ../trj_data/{maptr,maptrv2,maptrv2_cent,stream} \
-  --split {mini_val,val} \
-  --method {base,unc} \
+  --root ../trj_data/maptrv2 \
+  --split val \
+  --method unc \
   --batch_size 32 \
-  --ckpt_path /path/to/your_checkpoint.ckpt
+  --ckpt_path lightning_logs/version_1/checkpoints/epoch=63-step=19391.ckpt

@@ -16,7 +16,6 @@ from argparse import ArgumentParser
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-from datamodules import ArgoverseV1DataModule
 from datamodules import NuscenesDataModule
 from models.hivt import HiVT
 

@@ -16,7 +16,6 @@ from argparse import ArgumentParser
 import pytorch_lightning as pl
 from torch_geometric.data import DataLoader
 
-from datasets import ArgoverseV1Dataset
 from datasets import NuscenesDataset
 from models.hivt import HiVT
 

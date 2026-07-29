@@ -45,6 +45,8 @@ class NuscenesDataset(Dataset):
         self._processed_file_names = [os.path.splitext(f)[0].split('-')[1] + '.pt' for f in self.raw_file_names]
         self._processed_paths = [os.path.join(self.processed_dir, f) for f in self._processed_file_names]
         super(NuscenesDataset, self).__init__(root, transform=transform)
+        # filter to only files that were actually processed (scenes without predicted_map are skipped)
+        self._processed_paths = [p for p in self._processed_paths if os.path.exists(p)]
 
     @property
     def raw_dir(self) -> str:
@@ -68,12 +70,15 @@ class NuscenesDataset(Dataset):
     
     def process(self) -> None:
         for raw_path in tqdm(self.raw_paths):
-            kwargs = process_nuscenes(self._split, raw_path, self.centerline_used)
+            try:
+                kwargs = process_nuscenes(self._split, raw_path, self.centerline_used)
+            except KeyError:
+                continue
             data = TemporalData(**kwargs)
             torch.save(data, os.path.join(self.processed_dir, str(kwargs['seq_id']) + '.pt'))
 
     def len(self) -> int:
-        return len(self._raw_file_names)
+        return len(self._processed_paths)
 
     def get(self, idx) -> Data:
         return torch.load(self.processed_paths[idx])
