@@ -128,7 +128,7 @@ def main(args):
             "map_size_px": 224,
             "offset_frac_xy": (-0.5, 0.0),
         },
-        num_workers=4,
+        num_workers=32,
         verbose=True,
         data_dirs={  
             f"nusc_{args.version}": args.dataroot,
@@ -142,7 +142,7 @@ def main(args):
         batch_size=1,
         shuffle=False,
         collate_fn=dataset.get_collate_fn(),
-        num_workers=4,
+        num_workers=32,
     )
 
     cache_path = Path("~/.unified_data_cache").expanduser()
@@ -152,7 +152,6 @@ def main(args):
 
     batch: SceneBatch
     data = {}
-    scene_frame_count = {}
 
 
     file_name = args.index_file
@@ -160,34 +159,38 @@ def main(args):
         scene_data = pickle.load(file)
 
     scenario_count = 0
+    scene_raw_frame_count = {}  # scene_name -> number of raw frames seen so far
     for batch in tqdm(dataloader):
         ego_hist_len = batch.agent_hist_len[:, 0]
         ego_fut_len = batch.agent_fut_len[:, 0]
 
-        scene_frame_count[batch.scene_ids[0]] = len(scene_data[batch.scene_ids[0]])
-        values = [(value-1) for value in scene_frame_count.values()]
-        cumulative_sums = [cumsum*5 + i for i, cumsum in enumerate(np.cumsum(values))]    
+        scene_name = batch.scene_ids[0]
+
+        # track raw frame count per scene (used to detect keyframes)
+        if scene_name not in scene_raw_frame_count:
+            scene_raw_frame_count[scene_name] = 0
+        scene_raw_frame_count[scene_name] += 1
+
+        # skip scenes not in the index
+        if scene_name not in scene_data:
+            continue
 
         if ego_hist_len < 20 or ego_fut_len < 30:
             continue
-        
+
         else:
-            idx = batch.data_idx
             dt = batch.dt
 
-            cum_index = np.searchsorted(cumulative_sums, idx)
-            scene_name = list(scene_frame_count.keys())[cum_index.item()]
-            if cum_index == 0:
-                frame_idx = idx/5 
-            else:
-                frame_idx = (idx - cumulative_sums[cum_index.item()-1] - 1) / 5
-            
-            if frame_idx.item().is_integer():
-                pass
-            else:
+            # keyframes occur every 5 raw frames; raw_count starts at 1
+            raw_count = scene_raw_frame_count[scene_name]
+            if (raw_count - 1) % 5 != 0:
+                continue
+            frame_idx = (raw_count - 1) // 5
+
+            if frame_idx not in scene_data[scene_name]:
                 continue
 
-            sample_token = scene_data[scene_name][frame_idx.item()]
+            sample_token = scene_data[scene_name][frame_idx]
 
             agent_hist = batch.agent_hist.squeeze(0)[1:, -20:, [0, 1, 3, 4, 7]]   # #agents, time_len, (x, y, vx, vy, heading)
             agent_fut = batch.agent_fut.squeeze(0)[1:, :30, :2]    # #agents, time_len, (x,y)
@@ -244,6 +247,8 @@ def main(args):
             sample_token = map_data[i]['pts_bbox']['sample_idx']
         elif args.map_model == "StreamMapNet":
             sample_token = map_data[i]['token']
+        elif args.map_model == "Skeptic":
+            sample_token = map_data[i]['meta']['token']
 
         try:
             idx = sample_to_idx[sample_token]
@@ -268,6 +273,29 @@ def main(args):
             predict_boundary_scores = map_data[i]['pts_bbox']['scores_3d'][boundary_index].numpy()
 
         elif args.map_model == "StreamMapNet":
+            map_data[i]['vectors'], map_data[i]['betas'] = scale_stream(map_data[i])
+            divider_index = np.where(map_data[i]['labels'] == 1)
+            ped_crossing_index = np.where(map_data[i]['labels'] == 0)
+            boundary_index = np.where(map_data[i]['labels'] == 2)
+
+            predict_divider = map_data[i]['vectors'][divider_index]
+            predict_ped_crossing = map_data[i]['vectors'][ped_crossing_index]
+            predict_boundary = map_data[i]['vectors'][boundary_index]
+
+            predict_divider_betas = map_data[i]['betas'][divider_index]
+            predict_ped_crossing_betas = map_data[i]['betas'][ped_crossing_index]
+            predict_boundary_betas = map_data[i]['betas'][boundary_index]
+
+            predict_divider_scores = map_data[i]['scores'][divider_index]
+            predict_ped_crossing_scores = map_data[i]['scores'][ped_crossing_index]
+            predict_boundary_scores = map_data[i]['scores'][boundary_index]
+
+        elif args.map_model == "Skeptic":
+            # vectors are stored flat (N, 40); reshape to (N, 20, 2) for scale_stream
+            map_data[i]['vectors'] = map_data[i]['vectors'].reshape(-1, 20, 2)
+            # betas may be absent (no uncertainty head) or None — fill with zeros
+            if map_data[i].get('betas') is None:
+                map_data[i]['betas'] = np.zeros_like(map_data[i]['vectors'])
             map_data[i]['vectors'], map_data[i]['betas'] = scale_stream(map_data[i])
             divider_index = np.where(map_data[i]['labels'] == 1)
             ped_crossing_index = np.where(map_data[i]['labels'] == 0)
@@ -404,7 +432,7 @@ def parse_args():
     parser.add_argument('--version', type=str, default='trainval', choices=['trainval', 'mini'], help='version of nuscenes')
     parser.add_argument('--split', type=str, default='val', choices=['train', 'train_val', 'val', 'mini_train', 'mini_val'])
 
-    parser.add_argument('--map_model', type=str, required=True, choices=['MapTR', 'StreamMapNet'])
+    parser.add_argument('--map_model', type=str, required=True, choices=['MapTR', 'StreamMapNet', 'Skeptic'])
     parser.add_argument('--centerline', action='store_true', help='centerline usage')
 
     parser.add_argument('--dataroot', type=str, required=True, help='directory of nuscenes raw data')

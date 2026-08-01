@@ -19,5 +19,5 @@ run() {
       --map_file "$3"
 }
 
-run val   ../adaptor_files/traj_scene_frame_full_val.pkl   ../mapping_results/mapping_results_val.pickle
-run train ../adaptor_files/traj_scene_frame_full_train.pkl ../mapping_results/mapping_results_train.pickle
+run val   ../adaptor_files/traj_scene_frame_geosplit_val.pkl   ../mapping_results/mapping_results_val.pickle
+run train ../adaptor_files/traj_scene_frame_geosplit_train.pkl ../mapping_results/mapping_results_train.pickle
