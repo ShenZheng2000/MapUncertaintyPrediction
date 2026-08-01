@@ -97,7 +97,7 @@ def process_nuscenes(split, raw_path, centerline_used):
     av_heading_vector = origin - torch.tensor(data['ego_hist'][-2], dtype=torch.float)
     theta = torch.atan2(av_heading_vector[1], av_heading_vector[0])
     rotate_mat = torch.tensor([[torch.cos(theta), -torch.sin(theta)],
-                               [torch.sin(theta), torch.cos(theta)]])
+                               [torch.sin(theta), torch.cos(theta)]], dtype=torch.float)
     
     x = torch.zeros(num_nodes, 50, 2, dtype=torch.float)
     edge_index = torch.LongTensor(list(permutations(range(num_nodes), 2))).t().contiguous()
@@ -202,7 +202,7 @@ def get_lane_features(node_inds,
     for i, centerline in enumerate(centerlines):
         lane_centerline = torch.matmul(torch.tensor(centerline, dtype=torch.float32) - origin, rotate_mat)
         lane_positions.append(lane_centerline)
-        lane_position_betas.append(torch.tensor(centerline_betas[i]))
+        lane_position_betas.append(torch.tensor(centerline_betas[i], dtype=torch.float))
         count = len(lane_centerline) - 1
 
     lane_positions = torch.cat(lane_positions, dim=0)
