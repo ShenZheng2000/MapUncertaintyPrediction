@@ -291,12 +291,12 @@ def main(args):
             predict_boundary_scores = map_data[i]['scores'][boundary_index]
 
         elif args.map_model == "Skeptic":
-            # vectors are stored flat (N, 40); reshape to (N, 20, 2) for scale_stream
+            # vectors are stored flat (N, 40); reshape to (N, 20, 2)
             map_data[i]['vectors'] = map_data[i]['vectors'].reshape(-1, 20, 2)
             # betas may be absent (no uncertainty head) or None — fill with zeros
             if map_data[i].get('betas') is None:
                 map_data[i]['betas'] = np.zeros_like(map_data[i]['vectors'])
-            map_data[i]['vectors'], map_data[i]['betas'] = scale_stream(map_data[i])
+            # Skeptic vectors are already in meters [-30, 30]; do NOT call scale_stream
             divider_index = np.where(map_data[i]['labels'] == 1)
             ped_crossing_index = np.where(map_data[i]['labels'] == 0)
             boundary_index = np.where(map_data[i]['labels'] == 2)
